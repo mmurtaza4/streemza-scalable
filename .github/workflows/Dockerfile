@@ -1,20 +1,17 @@
-# Use Node.js LTS version
-FROM node:18
-
-# Set working directory
+# ---- Base (build) ----
+FROM node:18-alpine AS base
 WORKDIR /app
-
-# Copy package.json and package-lock.json
+# Install deps (works with or without package-lock.json)
 COPY package*.json ./
+RUN npm ci || npm install
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application
+# ---- Runtime ----
+FROM node:18-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+# Copy node_modules from build layer
+COPY --from=base /app/node_modules ./node_modules
+# Copy app source
 COPY . .
-
-# Expose the app port
 EXPOSE 3000
-
-# Start the application
 CMD ["npm", "start"]
